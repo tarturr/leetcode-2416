@@ -5,7 +5,7 @@ struct Route {
 struct Trie {
     score: i32,
     value: char,
-    children: Route
+    route: Route
 }
 
 impl Route {
@@ -13,17 +13,27 @@ impl Route {
         Route { children: Vec::new() }
     }
 
-    fn push(&mut self, string: String) {
+    fn push(&mut self, string: &str) {
         for i in 0..string.len() {
-            if let Some(child) = self.children.iter_mut().find(|child| child.value == string[i]) {
-                child.value += 1;
-                child.push(&string[1..]);
+            if let Some(child) = self.children.iter_mut().find(|child| child.value == string.as_bytes()[i] as char) {
+                child.score += 1;
+                child.route.push(&string[1..]);
             } else {
-                let mut trie = Trie::new(string[0]);
-                trie.children.push(&string[1..]);
+                let mut trie = Trie::new(string.as_bytes()[0] as char);
+                trie.route.push(&string[1..]);
                 self.children.push(trie);
             }
         }
+    }
+
+    fn score(&self) -> Vec<i32> {
+        let mut scores: Vec<i32> = Vec::new();
+
+        for child in &self.children {
+            scores.push(child.score());
+        }
+
+        scores
     }
 }
 
@@ -32,28 +42,41 @@ impl Trie {
         Trie {
             score: 0,
             value,
-            children: Route::new()
+            route: Route::new()
+        }
+    }
+
+    fn score(&self) -> i32 {
+        if self.route.children.is_empty() {
+            self.score
+        } else {
+            let mut score = self.score;
+
+            for child in &self.route.children {
+                score += child.score();
+            }
+
+            score
         }
     }
 }
 
 pub fn sum_prefix_scores(words: Vec<String>) -> Vec<i32> {
-    /*
-    let mut scores = vec![0; words.len()];
+    let mut route = Route::new();
 
-    for (i, string) in words.iter().enumerate() {
-        for j in 0..(string.len()) {
-            scores[i] += words.iter()
-                    .filter(|&word| j < word.len() && string[..=j] == word[..=j])
-                    .count() as i32;
-        }
+    for word in &words {
+        route.push(word);
     }
 
-    scores
-    */
+    route.score()
 }
 
 
 fn main() {
-    println!("Hello, world!");
+    println!("{:?}", sum_prefix_scores(vec![
+        String::from("abc"),
+        String::from("ab"),
+        String::from("bc"),
+        String::from("b")
+    ]));
 }
