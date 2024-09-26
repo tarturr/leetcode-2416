@@ -14,12 +14,12 @@ impl Route {
     }
 
     fn push(&mut self, string: &str) {
-        for i in 0..string.len() {
-            if let Some(child) = self.children.iter_mut().find(|child| child.value == string.as_bytes()[i] as char) {
+        for byte in string.as_bytes() {
+            if let Some(child) = self.children.iter_mut().find(|child| child.value == *byte as char) {
                 child.score += 1;
                 child.route.push(&string[1..]);
             } else {
-                let mut trie = Trie::new(string.as_bytes()[0] as char);
+                let mut trie = Trie::new(*byte as char);
                 trie.route.push(&string[1..]);
                 self.children.push(trie);
             }
