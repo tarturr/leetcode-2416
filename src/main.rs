@@ -14,15 +14,19 @@ impl Route {
     }
 
     fn push(&mut self, string: &str) {
-        for byte in string.as_bytes() {
-            if let Some(child) = self.children.iter_mut().find(|child| child.value == *byte as char) {
-                child.score += 1;
-                child.route.push(&string[1..]);
-            } else {
-                let mut trie = Trie::new(*byte as char);
-                trie.route.push(&string[1..]);
-                self.children.push(trie);
-            }
+        if string.len() == 0 {
+            return;
+        }
+
+        let current = string.as_bytes()[0] as char;
+
+        if let Some(child) = self.children.iter_mut().find(|child| child.value == current) {
+            child.score += 1;
+            child.route.push(&string[1..]);
+        } else {
+            let mut trie = Trie::new(current);
+            trie.route.push(&string[1..]);
+            self.children.push(trie);
         }
     }
 
@@ -56,7 +60,7 @@ impl Route {
 impl Trie {
     fn new(value: char) -> Trie {
         Trie {
-            score: 0,
+            score: 1,
             value,
             route: Route::new()
         }
