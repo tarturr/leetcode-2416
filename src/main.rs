@@ -26,11 +26,11 @@ impl Route {
         }
     }
 
-    fn score(&self) -> Vec<i32> {
+    fn compute_scores(&self) -> Vec<i32> {
         let mut scores: Vec<i32> = Vec::new();
 
         for child in &self.children {
-            scores.push(child.score());
+            scores.push(child.compute_score());
         }
 
         scores
@@ -62,14 +62,14 @@ impl Trie {
         }
     }
 
-    fn score(&self) -> i32 {
+    fn compute_score(&self) -> i32 {
         if self.route.children.is_empty() {
             self.score
         } else {
             let mut score = self.score;
 
             for child in &self.route.children {
-                score += child.score();
+                score += child.compute_score();
             }
 
             score
@@ -102,7 +102,7 @@ pub fn sum_prefix_scores(words: Vec<String>) -> Vec<i32> {
         route.push(word);
     }
 
-    route.score()
+    route.compute_scores()
 }
 
 
