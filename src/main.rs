@@ -2,6 +2,11 @@ struct Route {
     children: Vec<Trie>
 }
 
+struct Root {
+    route: Route,
+    words: Vec<String>
+}
+
 struct Trie {
     score: i32,
     value: char,
@@ -30,24 +35,13 @@ impl Route {
         }
     }
 
-    fn compute_scores(&self) -> Vec<i32> {
-        let mut scores: Vec<i32> = Vec::new();
-
-        for child in &self.children {
-            scores.push(child.compute_score());
-        }
-
-        scores
-    }
-
-    fn find_mut_child(&mut self, pattern: &str) -> Option<&mut Trie> {
-        let objective = pattern.as_bytes()[0] as char;
-
+    fn find_child(&self, pattern: &str) -> Option<&Trie> {
         if pattern.len() > 0 {
-            let child = self.children.iter_mut().find(|child| child.value == objective);
+            let objective = pattern.as_bytes()[0] as char;
+            let child = self.children.iter().find(|child| child.value == objective);
 
             if let Some(child) = child {
-                child.find_mut_child(&pattern[1..])
+                child.find_child(&pattern[1..])
             } else {
                 None
             }
@@ -57,8 +51,41 @@ impl Route {
     }
 }
 
+impl Root {
+    fn new(words: Vec<String>) -> Self {
+        let mut route = Route::new();
+
+        for word in &words {
+            route.push(&word)
+        }
+
+        Root {
+            route,
+            words
+        }
+    }
+
+    fn compute_scores(&self) -> Vec<i32> {
+        let mut scores: Vec<i32> = Vec::new();
+
+        for word in &self.words {
+            let mut score = 0;
+
+            for i in 1..=word.len() {
+                if let Some(trie) = self.route.find_child(&word[..i]) {
+                    score += trie.score;
+                }
+            }
+
+            scores.push(score);
+        }
+
+        scores
+    }
+}
+
 impl Trie {
-    fn new(value: char) -> Trie {
+    fn new(value: char) -> Self {
         Trie {
             score: 1,
             value,
@@ -66,33 +93,11 @@ impl Trie {
         }
     }
 
-    fn compute_score(&self) -> i32 {
-        if self.route.children.is_empty() {
-            self.score
-        } else {
-            let mut score = self.score;
-
-            for child in &self.route.children {
-                score += child.compute_score();
-            }
-
-            score
-        }
-    }
-
-    fn find_mut_child(&mut self, pattern: &str) -> Option<&mut Trie> {
+    fn find_child(&self, pattern: &str) -> Option<&Trie> {
         let length = pattern.len();
 
-        if length > 1 {
-            self.route.find_mut_child(pattern)
-        } else if length == 1 {
-            let target = pattern.as_bytes()[0] as char;
-
-            if target == self.value {
-                Some(self)
-            } else {
-                None
-            }
+        if length >= 1 {
+            self.route.find_child(pattern)
         } else {
             Some(self)
         }
@@ -100,13 +105,7 @@ impl Trie {
 }
 
 pub fn sum_prefix_scores(words: Vec<String>) -> Vec<i32> {
-    let mut route = Route::new();
-
-    for word in &words {
-        route.push(word);
-    }
-
-    route.compute_scores()
+    Root::new(words).compute_scores()
 }
 
 
